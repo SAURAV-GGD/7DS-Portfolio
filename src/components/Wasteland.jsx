@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import bgImg from '../assets/wasteland/layer-bg.jpg'
@@ -15,10 +16,14 @@ const PATH_DEPTH = 180
 const TEXTURES_LIST = [bgImg, ruins01, ruins03, emberImg, ruins02, ruins05, ruins04, ruins06]
 
 export default function Wasteland() {
-  const textures = useTexture(TEXTURES_LIST)
-  textures.forEach((t) => {
-    t.colorSpace = THREE.SRGBColorSpace
-  })
+  const baseTextures = useTexture(TEXTURES_LIST)
+  const [textures] = useState(() =>
+    baseTextures.map(t => {
+      const clone = t.clone()
+      clone.colorSpace = THREE.SRGBColorSpace
+      return clone
+    })
+  )
 
   // Main backdrop layers — deep parallax planes with varied textures
   const backdropCount = 14

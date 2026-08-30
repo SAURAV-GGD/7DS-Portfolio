@@ -1,10 +1,9 @@
 import { useEffect, useRef } from 'react'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { TOTAL_DEPTH } from '../config/sections'
 
 export default function ScrollCameraRig({ scrollRef, cameraZRef }) {
-  const { camera } = useThree()
   const mouseXRef = useRef(0)
   const headTurnRef = useRef(0)
   const reducedMotionRef = useRef(false)
@@ -49,12 +48,14 @@ export default function ScrollCameraRig({ scrollRef, cameraZRef }) {
     )
     const headTurn = headTurnRef.current
 
-    camera.position.z = targetZ
-    camera.position.y = 1.6 + bob
-    camera.position.x = sway + headTurn * 0.5
+    state.camera.position.set(
+      sway + headTurn * 0.5,
+      1.6 + bob,
+      targetZ
+    )
 
     // Look forward with slight head-turn offset
-    camera.lookAt(
+    state.camera.lookAt(
       sway * 0.5 + headTurn * 2,
       1.5,
       targetZ - 10
