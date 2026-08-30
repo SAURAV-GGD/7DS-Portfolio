@@ -88,8 +88,6 @@ export default function Wasteland() {
 
   return (
     <group>
-      {/* fog ties the layered planes together into one hazy scene */}
-      <fog attach="fog" args={['#2a1308', 5, 100]} />
 
       {backdrops}
       {walls}
@@ -104,6 +102,8 @@ export default function Wasteland() {
           color="#1a0a04"
           roughness={1}
           metalness={0}
+          transparent
+          opacity={0.1}
         />
       </mesh>
 
@@ -117,7 +117,7 @@ export default function Wasteland() {
           color="#241108"
           roughness={0.95}
           transparent
-          opacity={0.4}
+          opacity={0.15}
         />
       </mesh>
 

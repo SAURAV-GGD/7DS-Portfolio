@@ -2,6 +2,7 @@ import { Suspense, useState, useCallback, useEffect } from 'react'
 import Scene from './components/Scene'
 import WaypointText from './components/WaypointText'
 import LoadingScreen from './components/LoadingScreen'
+import BackgroundSequence from './components/BackgroundSequence'
 import { useScrollProgress } from './hooks/useScrollProgress'
 import { useScrollFraction } from './hooks/useScrollFraction'
 import { WAYPOINTS } from './config/sections'
@@ -32,6 +33,8 @@ export default function App() {
 
   return (
     <div>
+      <BackgroundSequence />
+
       {/* Loading Screen — CRT broadcast → sandstorm */}
       {!loaded && <LoadingScreen onComplete={handleLoadingComplete} />}
 

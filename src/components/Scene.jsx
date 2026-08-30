@@ -15,10 +15,8 @@ export default function Scene({ scrollRef }) {
   return (
     <Canvas
       camera={{ fov: 60, near: 0.1, far: 250, position: [0, 1.6, 0] }}
-      gl={{ antialias: true }}
+      gl={{ antialias: true, alpha: true }}
     >
-      <color attach="background" args={['#0a0604']} />
-
       <Wasteland />
       <Embers cameraZRef={cameraZRef} />
       <FirePillars />

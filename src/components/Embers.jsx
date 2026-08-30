@@ -104,7 +104,7 @@ export default function Embers({ cameraZRef }) {
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          count={TOTAL}
+          count={total}
           array={positions}
           itemSize={3}
         />
