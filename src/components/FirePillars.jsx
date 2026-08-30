@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react'
+import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -23,7 +23,7 @@ function FirePillar({ position }) {
   const pointsRef = useRef()
   const lightRef = useRef()
 
-  const { positions, seeds } = useMemo(() => {
+  const [{ positions, seeds }] = useState(() => {
     const count = PARTICLES_PER_PILLAR
     const positions = new Float32Array(count * 3)
     const seeds = new Float32Array(count)
@@ -34,7 +34,7 @@ function FirePillar({ position }) {
       seeds[i] = Math.random()
     }
     return { positions, seeds }
-  }, [])
+  })
 
   useFrame((state, delta) => {
     if (!pointsRef.current) return

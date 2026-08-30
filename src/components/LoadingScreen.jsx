@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 // ─── CRT Emergency Broadcast → Sandstorm Reveal ────────────────
 // Stage 1: CRT static + "THIS IS NOT A DRILL" (~2.5s)
@@ -36,7 +36,7 @@ export default function LoadingScreen({ onComplete }) {
     const delay = textIdx === 0 ? 400 : textIdx === 2 ? 500 : 120
     const timer = setTimeout(() => setTextIdx((i) => i + 1), delay)
     return () => clearTimeout(timer)
-  }, [stage, textIdx])
+  }, [stage, textIdx, broadcastLines.length])
 
   // Static noise canvas (CRT effect)
   useEffect(() => {
@@ -95,7 +95,7 @@ export default function LoadingScreen({ onComplete }) {
   }, [stage, onComplete])
 
   // Generate sandstorm particles
-  const particles = useRef(
+  const [particles] = useState(() =>
     Array.from({ length: 200 }, () => ({
       x: Math.random() * 100,
       y: Math.random() * 100,
@@ -270,7 +270,7 @@ export default function LoadingScreen({ onComplete }) {
                 rgba(30,15,8,${stormOpacity * 0.98}) 100%)`,
             }}
           >
-            {particles.current.map((p, i) => (
+            {particles.map((p, i) => (
               <div
                 key={i}
                 style={{

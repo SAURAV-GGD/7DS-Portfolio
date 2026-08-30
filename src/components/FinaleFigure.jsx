@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Billboard, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
@@ -14,14 +14,17 @@ export default function FinaleFigure({ cameraZRef }) {
   const glowLeftRef = useRef()
   const glowRightRef = useRef()
   const energyRef = useRef()
-  const portraitTexture = useTexture(finalePortrait)
+
+  const texture = useTexture(finalePortrait)
+  const [portraitTexture] = useState(() => {
+    const clone = texture.clone()
+    clone.colorSpace = THREE.SRGBColorSpace
+    return clone
+  })
+
   const z = -FINALE_FRACTION * TOTAL_DEPTH
 
-  useEffect(() => {
-    portraitTexture.colorSpace = THREE.SRGBColorSpace
-  }, [portraitTexture])
-
-  const energyPositions = useMemo(() => {
+  const [energyPositions] = useState(() => {
     const positions = new Float32Array(ENERGY_PARTICLE_COUNT * 3)
     for (let i = 0; i < ENERGY_PARTICLE_COUNT; i += 1) {
       positions[i * 3] = (Math.random() - 0.5) * 4.5
@@ -29,7 +32,7 @@ export default function FinaleFigure({ cameraZRef }) {
       positions[i * 3 + 2] = (Math.random() - 0.5) * 2.5
     }
     return positions
-  }, [])
+  })
 
   useFrame((state, delta) => {
     if (!groupRef.current) return

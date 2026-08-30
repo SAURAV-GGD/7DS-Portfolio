@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -26,7 +26,7 @@ export default function Embers({ cameraZRef }) {
   const ashCount = isCompactViewport ? 350 : 700
   const total = emberCount + ashCount
 
-  const { positions, colors, sizes, seeds, types } = useMemo(() => {
+  const [{ positions, colors, sizes, seeds, types }] = useState(() => {
     const positions = new Float32Array(total * 3)
     const colors = new Float32Array(total * 3)
     const sizes = new Float32Array(total)
@@ -58,7 +58,7 @@ export default function Embers({ cameraZRef }) {
       }
     }
     return { positions, colors, sizes, seeds, types }
-  }, [emberCount, total])
+  })
 
   useFrame((state, delta) => {
     if (!points.current) return

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Billboard, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
@@ -15,17 +15,18 @@ const PORTRAITS = { pride, greed, gluttony, lust, envy, wrath, sloth }
 
 function PortraitArt({ src, materialRef }) {
   const texture = useTexture(src)
-
-  useEffect(() => {
-    texture.colorSpace = THREE.SRGBColorSpace
-  }, [texture])
+  const [clonedTexture] = useState(() => {
+    const clone = texture.clone()
+    clone.colorSpace = THREE.SRGBColorSpace
+    return clone
+  })
 
   return (
     <mesh>
       <planeGeometry args={[3.25, 4.35]} />
       <meshBasicMaterial
         ref={materialRef}
-        map={texture}
+        map={clonedTexture}
         transparent
         opacity={0}
         toneMapped={false}
