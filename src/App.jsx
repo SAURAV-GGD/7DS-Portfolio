@@ -314,7 +314,7 @@ export default function App() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'flex-end',
-          paddingBottom: '11vh',
+          paddingBottom: '7vh',
           textAlign: 'center',
           opacity: finaleOpacity,
           zIndex: 10,

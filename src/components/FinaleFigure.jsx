@@ -191,8 +191,9 @@ export default function FinaleFigure({ cameraZRef }) {
       agyEmblemRef.current.rotation.y = orbitAngle + Math.PI
     }
 
-    if (glowLeftRef.current) glowLeftRef.current.intensity = opacity * (6 + Math.sin(time * 3.1) * 1.8)
-    if (glowRightRef.current) glowRightRef.current.intensity = opacity * (6 + Math.sin(time * 3.1 + 1.4) * 1.8)
+    // Gentle emblem pulse (subtle magical glow without washing out the statue)
+    if (glowLeftRef.current) glowLeftRef.current.intensity = opacity * (1.1 + Math.sin(time * 3.1) * 0.25)
+    if (glowRightRef.current) glowRightRef.current.intensity = opacity * (1.1 + Math.sin(time * 3.1 + 1.4) * 0.25)
 
     // Rising transcendence embers
     if (energyRef.current) {
@@ -211,19 +212,51 @@ export default function FinaleFigure({ cameraZRef }) {
   })
 
   return (
-    <group ref={groupRef} position={[0, 0.9, z]}>
-      {/* Volumetric Oculus Light Column descending from Pantheon ceiling */}
+    <group ref={groupRef} position={[0, 0.45, z]}>
+      {/* Soft, natural dawn sun shaft descending from the Pantheon oculus (delicate, non-glaring) */}
       <mesh position={[0, 6, 0]}>
-        <cylinderGeometry args={[2.2, 3.8, 14, 32, 1, true]} />
+        <cylinderGeometry args={[2.0, 3.6, 14, 32, 1, true]} />
         <meshBasicMaterial
-          color="#ffaa66"
+          color="#ffe2c4"
           transparent
-          opacity={0.08}
+          opacity={0.018}
           blending={THREE.AdditiveBlending}
-          side={THREE.DoubleSide}
+          side={THREE.FrontSide}
           depthWrite={false}
         />
       </mesh>
+
+      {/* Natural Dawn Sun Spotlight — highlights hair, shoulders and chest */}
+      <spotLight
+        position={[0, 12, 3.5]}
+        color="#fff1dd"
+        intensity={3.8}
+        angle={0.52}
+        penumbra={0.8}
+        distance={22}
+      />
+
+      {/* Warm Dawn Sun Key Light — sculpts muscular contours and chiseled stone relief */}
+      <directionalLight
+        position={[4, 7, 5]}
+        color="#ffe2be"
+        intensity={2.0}
+      />
+
+      {/* Soft Ambient Sky Fill — lifts deep shadows naturally */}
+      <directionalLight
+        position={[-4, 3, 4]}
+        color="#b8cfe2"
+        intensity={0.6}
+      />
+
+      {/* Warm Back Silhouette Rim Light */}
+      <pointLight
+        position={[0, 4.5, -3]}
+        color="#ffbe80"
+        intensity={1.0}
+        distance={9}
+      />
 
       {/* Rotating 3D Greek/Roman Stone Statue */}
       <group ref={rotatorRef} position={[0, -0.12, 0]}>
@@ -252,27 +285,27 @@ export default function FinaleFigure({ cameraZRef }) {
 
       {/* Orbiting Claude-inspired orange energy emblem */}
       <group ref={claudeEmblemRef} position={[-2.5, 2.0, 0]}>
-        <pointLight ref={glowLeftRef} color="#ff7a30" distance={6} intensity={6} />
+        <pointLight ref={glowLeftRef} color="#ff7a30" distance={4.5} intensity={1.2} />
         <mesh rotation={[Math.PI / 4, 0, 0]}>
           <torusGeometry args={[0.24, 0.02, 8, 32]} />
-          <meshBasicMaterial color="#ff9a55" transparent opacity={1} blending={THREE.AdditiveBlending} toneMapped={false} />
+          <meshBasicMaterial color="#ff9a55" transparent opacity={0.9} blending={THREE.AdditiveBlending} toneMapped={false} />
         </mesh>
         <mesh>
           <icosahedronGeometry args={[0.13, 1]} />
-          <meshBasicMaterial color="#ffd0a5" transparent opacity={1} blending={THREE.AdditiveBlending} toneMapped={false} />
+          <meshBasicMaterial color="#ffd0a5" transparent opacity={0.9} blending={THREE.AdditiveBlending} toneMapped={false} />
         </mesh>
       </group>
 
       {/* Orbiting Antigravity-inspired blue-white energy emblem */}
       <group ref={agyEmblemRef} position={[2.5, 2.0, 0]}>
-        <pointLight ref={glowRightRef} color="#5ba3ff" distance={6} intensity={6} />
+        <pointLight ref={glowRightRef} color="#5ba3ff" distance={4.5} intensity={1.2} />
         <mesh rotation={[-Math.PI / 4, 0, 0]}>
           <torusGeometry args={[0.24, 0.02, 8, 32]} />
-          <meshBasicMaterial color="#79b8ff" transparent opacity={1} blending={THREE.AdditiveBlending} toneMapped={false} />
+          <meshBasicMaterial color="#79b8ff" transparent opacity={0.9} blending={THREE.AdditiveBlending} toneMapped={false} />
         </mesh>
         <mesh>
           <octahedronGeometry args={[0.14, 0]} />
-          <meshBasicMaterial color="#e3f1ff" transparent opacity={1} blending={THREE.AdditiveBlending} toneMapped={false} />
+          <meshBasicMaterial color="#e3f1ff" transparent opacity={0.9} blending={THREE.AdditiveBlending} toneMapped={false} />
         </mesh>
       </group>
 

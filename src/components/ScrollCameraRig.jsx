@@ -116,7 +116,20 @@ function getCameraStationTransform(progress, isMobile = false) {
   }
 
   // Outside chambers: walking along the open central colonnade
-  const targetZ = -progress * TOTAL_DEPTH
+  let targetZ = -progress * TOTAL_DEPTH
+
+  // Finale Transcendence Station: camera glides forward and holds optimal frontal exhibition distance
+  if (progress >= 0.88) {
+    const finaleZ = -0.95 * TOTAL_DEPTH // -171.0
+    const targetStopZ = finaleZ + (isMobile ? 8.2 : 7.2) // ~ -163.8m
+    if (progress >= 0.93) {
+      targetZ = targetStopZ
+    } else {
+      const tApproach = (progress - 0.88) / 0.05
+      targetZ = lerp(-0.88 * TOTAL_DEPTH, targetStopZ, smooth(tApproach))
+    }
+  }
+
   return {
     x: 0,
     z: targetZ,
@@ -237,12 +250,27 @@ export default function ScrollCameraRig({ scrollRef, cameraZRef }) {
     const motionAmount = reducedMotionRef.current ? 0 : movingAmount
     const bob = Math.sin(t * 2.4) * 0.03 * motionAmount
 
+    // Elevation & gaze adjustment for the Finale Transcendence scene
+    // Elevates camera from walking eye-level (1.6) to model chest/eye level (2.75 - 2.85)
+    let camY = 1.6
+    let lookY = 1.55
+    let lookZ = transform.z - Math.cos(transform.yaw) * 10
+
+    if (rawProgress >= 0.88) {
+      const finaleP = THREE.MathUtils.clamp((rawProgress - 0.88) / 0.055, 0, 1)
+      const blend = smooth(finaleP)
+      camY = THREE.MathUtils.lerp(1.6, isMobile ? 2.55 : 2.8, blend)
+      lookY = THREE.MathUtils.lerp(1.55, isMobile ? 2.65 : 2.9, blend)
+      const finaleStatueZ = -0.95 * TOTAL_DEPTH
+      lookZ = THREE.MathUtils.lerp(transform.z - 10, finaleStatueZ, blend)
+    }
+
     // Default Colonnade Walk Target Camera & Look Position
-    const defaultCam = new THREE.Vector3(transform.x, 1.6, transform.z)
+    const defaultCam = new THREE.Vector3(transform.x, camY, transform.z)
     const defaultLook = new THREE.Vector3(
       transform.x + Math.sin(transform.yaw) * 10,
-      1.55,
-      transform.z - Math.cos(transform.yaw) * 10
+      lookY,
+      lookZ
     )
 
     let finalCamTarget = defaultCam
