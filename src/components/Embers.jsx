@@ -118,7 +118,7 @@ export default function Embers({ cameraZRef }) {
       </bufferGeometry>
       <shaderMaterial
         transparent
-        opacity={0.9}
+        opacity={0.85}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
         vertexColors
@@ -128,7 +128,8 @@ export default function Embers({ cameraZRef }) {
           void main() {
             vColor = color;
             vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
-            gl_PointSize = size * (30.0 / max(1.0, -modelViewPosition.z));
+            float dist = max(1.8, -modelViewPosition.z);
+            gl_PointSize = clamp(size * (22.0 / dist), 1.0, 16.0);
             gl_Position = projectionMatrix * modelViewPosition;
           }
         `}
@@ -136,7 +137,8 @@ export default function Embers({ cameraZRef }) {
           varying vec3 vColor;
           void main() {
             float distanceFromCenter = length(gl_PointCoord - vec2(0.5));
-            float alpha = 1.0 - smoothstep(0.22, 0.5, distanceFromCenter);
+            if (distanceFromCenter > 0.5) discard;
+            float alpha = smoothstep(0.5, 0.08, distanceFromCenter) * 0.75;
             gl_FragColor = vec4(vColor, alpha);
           }
         `}

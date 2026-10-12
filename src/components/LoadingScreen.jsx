@@ -177,7 +177,10 @@ export default function LoadingScreen({ onComplete }) {
             <div
               key={i}
               style={{
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily:
+                  i === 2
+                    ? "'RuinedSerif', 'Liberation Serif', serif"
+                    : "'JetBrains Mono', monospace",
                 fontSize: i === 2 ? 'clamp(20px, 4vw, 36px)' : 'clamp(10px, 1.5vw, 14px)',
                 color:
                   i === 0
@@ -231,12 +234,14 @@ export default function LoadingScreen({ onComplete }) {
           >
             <div
               style={{
-                fontFamily: "'Bebas Neue', sans-serif",
-                fontSize: 'clamp(48px, 12vw, 140px)',
-                color: '#f4e3d3',
-                letterSpacing: '12px',
-                lineHeight: 0.9,
-                textShadow: '0 0 60px rgba(255,106,43,0.3)',
+                fontFamily: "'RuinedSerif', 'Liberation Serif', 'PT Serif', serif",
+                fontSize: 'clamp(44px, 11vw, 130px)',
+                fontWeight: 700,
+                color: '#f8efe6',
+                letterSpacing: 'clamp(6px, 1.5vw, 16px)',
+                lineHeight: 0.92,
+                textTransform: 'uppercase',
+                textShadow: '0 0 60px rgba(255,106,43,0.35), 0 20px 40px rgba(0,0,0,0.9)',
                 textAlign: 'center',
               }}
             >

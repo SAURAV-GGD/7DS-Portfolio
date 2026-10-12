@@ -12,6 +12,7 @@ import wrath from '../assets/portraits/wrath.png'
 import sloth from '../assets/portraits/sloth.png'
 
 const PORTRAITS = { pride, greed, gluttony, lust, envy, wrath, sloth }
+useTexture.preload(Object.values(PORTRAITS))
 
 function PortraitArt({ src, materialRef }) {
   const texture = useTexture(src)
@@ -22,8 +23,8 @@ function PortraitArt({ src, materialRef }) {
   })
 
   return (
-    <mesh>
-      <planeGeometry args={[3.25, 4.35]} />
+    <mesh position={[0, 0, 0.04]}>
+      <planeGeometry args={[3.6, 4.8]} />
       <meshBasicMaterial
         ref={materialRef}
         map={clonedTexture}
@@ -35,66 +36,130 @@ function PortraitArt({ src, materialRef }) {
   )
 }
 
-// A portrait only starts loading while its station is approaching. That keeps
-// the first load light without leaving an empty placeholder in the scene.
 export default function SinPortrait({ waypoint, cameraZRef, side = 'right' }) {
   const groupRef = useRef()
   const artRef = useRef()
-  const glowRef = useRef()
-  const frameRef = useRef()
   const lightRef = useRef()
+  const fillLightRef = useRef()
+  const stoneRef = useRef()
   const [isNearby, setIsNearby] = useState(false)
 
   const z = -waypoint.fraction * TOTAL_DEPTH
-  const x = side === 'right' ? 3.45 : -3.45
+  const x = side === 'right' ? 3.8 : -3.8
   const src = PORTRAITS[waypoint.portrait]
 
   useFrame((state) => {
     const cameraZ = cameraZRef.current ?? 0
     const distance = Math.abs(cameraZ - z)
-    const shouldRender = distance < 20
-    const opacity = THREE.MathUtils.smoothstep(19 - distance, 0, 10) * 0.96
+    const shouldRender = distance < 28
+    const opacity = THREE.MathUtils.smoothstep(24 - distance, 0, 10) * 0.98
 
     if (shouldRender !== isNearby) setIsNearby(shouldRender)
+
+    const t = state.clock.elapsedTime
     if (groupRef.current) {
-      groupRef.current.position.y = 1.12 + Math.sin(state.clock.elapsedTime * 0.75 + z) * 0.08
+      // Subtle architectural grounding sway
+      groupRef.current.position.y = 0.95 + Math.sin(t * 0.5 + z * 0.1) * 0.04
     }
 
     if (artRef.current) artRef.current.opacity = opacity
-    if (glowRef.current) glowRef.current.opacity = opacity * 0.38
-    if (frameRef.current) frameRef.current.opacity = opacity * 0.82
-    if (lightRef.current) lightRef.current.intensity = opacity * 4.5
+    if (stoneRef.current) {
+      stoneRef.current.traverse((child) => {
+        if (child.material && child.material.opacity !== undefined) {
+          child.material.opacity = opacity
+        }
+      })
+    }
+
+    // Dynamic torch flame flicker
+    if (lightRef.current) {
+      const flicker = Math.sin(t * 4.2 + z) * 0.4 + Math.sin(t * 8.7) * 0.2
+      lightRef.current.intensity = opacity * (4.2 + flicker)
+    }
+    if (fillLightRef.current) {
+      fillLightRef.current.intensity = opacity * 1.5
+    }
   })
 
   return (
     <group ref={groupRef}>
       {isNearby && (
-        <Billboard position={[x, 0, z]}>
-          <mesh position={[0, 0, -0.04]}>
-            <planeGeometry args={[4.15, 5.25]} />
-            <meshBasicMaterial
-              ref={glowRef}
-              color="#ff4f19"
-              transparent
-              opacity={0}
-              blending={THREE.AdditiveBlending}
-              depthWrite={false}
-              toneMapped={false}
-            />
-          </mesh>
-          <mesh position={[0, 0, -0.02]}>
-            <planeGeometry args={[3.55, 4.7]} />
-            <meshBasicMaterial
-              ref={frameRef}
-              color="#0b0503"
-              transparent
-              opacity={0}
-            />
-          </mesh>
-          <PortraitArt src={src} materialRef={artRef} />
-        </Billboard>
+        <group position={[x, 0, z]}>
+          <Billboard>
+            {/* ── Architectural 3D Roman Stele Altar ── */}
+            <group ref={stoneRef}>
+              {/* Massive Stone Pedestal Plinth Base */}
+              <mesh position={[0, -2.62, -0.05]}>
+                <boxGeometry args={[4.2, 0.7, 0.8]} />
+                <meshStandardMaterial
+                  color="#1c130d"
+                  roughness={0.92}
+                  metalness={0.08}
+                  transparent
+                  opacity={0}
+                />
+              </mesh>
+              <mesh position={[0, -2.25, -0.03]}>
+                <boxGeometry args={[3.9, 0.25, 0.6]} />
+                <meshStandardMaterial
+                  color="#2a1c13"
+                  roughness={0.9}
+                  metalness={0.1}
+                  transparent
+                  opacity={0}
+                />
+              </mesh>
+
+              {/* Weathered Antique Bronze/Travertine Frame */}
+              <mesh position={[0, 0, -0.04]}>
+                <boxGeometry args={[3.92, 5.12, 0.2]} />
+                <meshStandardMaterial
+                  color="#160e0a"
+                  roughness={0.88}
+                  metalness={0.15}
+                  transparent
+                  opacity={0}
+                />
+              </mesh>
+
+              {/* Classical Cornice Header */}
+              <mesh position={[0, 2.65, -0.02]}>
+                <boxGeometry args={[4.2, 0.35, 0.5]} />
+                <meshStandardMaterial
+                  color="#261912"
+                  roughness={0.9}
+                  metalness={0.1}
+                  transparent
+                  opacity={0}
+                />
+              </mesh>
+            </group>
+
+            {/* The High-Resolution Character Portrait */}
+            <PortraitArt src={src} materialRef={artRef} />
+          </Billboard>
+
+          {/* Living Roman Torch Warm Key Light */}
+          <pointLight
+            ref={lightRef}
+            position={[side === 'right' ? -1.6 : 1.6, 1.4, 1.8]}
+            color="#ff8838"
+            intensity={0}
+            distance={9}
+            decay={2}
+          />
+
+          {/* Soft Amber Rim / Ambient Bounce */}
+          <pointLight
+            ref={fillLightRef}
+            position={[side === 'right' ? 2.0 : -2.0, 0.5, 0.5]}
+            color="#ff5511"
+            intensity={0}
+            distance={7}
+            decay={2}
+          />
+        </group>
       )}
-      <pointLight ref={lightRef} position={[x, 0.35, z + 0.3]} color="#ff6a2b" intensity={0} distance={6} />
     </group>
   )
 }

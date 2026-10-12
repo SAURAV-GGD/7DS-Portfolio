@@ -1,0 +1,20 @@
+{
+  "name": "Saurav Kumar — The 7DS Wasteland Portfolio",
+  "short_name": "Saurav 7DS",
+  "description": "3D scroll-driven journey through the 7 Deadly Sins and levitation transcendence by Saurav Kumar.",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#080807",
+  "background_color": "#080807",
+  "display": "standalone"
+}

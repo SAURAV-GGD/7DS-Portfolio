@@ -29,3 +29,22 @@
 - [x] Update `ScrollCameraRig.jsx` — mouse-parallax head turn
 - [x] Final performance optimization
 - [x] Build verification (`npm run build`)
+
+## Phase 7 — Mousham.design Inspiration & LoveHub Integration
+- [x] Integrate `lovehub.in` as Sin IV: **LUST** in `sections.js`, `brain.md`, and `implementation_plan.md`
+- [x] Install & integrate `Lenis` smooth inertial momentum scrolling
+- [x] Create procedural Web Audio API ambient engine (`AudioEngine.jsx` — sub-bass drone + desert wind)
+- [x] Create Mousham-style `EditorialHUD.jsx` (IST live coordinates, sector telemetry, audio toggle, sin compass)
+- [x] Create custom `MagneticCursor.jsx` with lerp physics and reactive hover states
+- [x] Implement custom GLSL heat haze distortion shader (`HeatHaze.jsx`)
+- [x] Connect full R3F 3D Wasteland walkthrough in `App.jsx` with post-walk Selected Work & Dossier archive
+- [x] Pass zero-warning lint check (`oxlint`) and verify production build (`vite build`)
+
+## Phase 8 — Roman Dynamic Poses & Real 3D Procedural Architecture
+- [x] Regenerate dynamic-pose Roman portraits preserving facial likeness (Pride, Greed, Gluttony, Envy, Wrath, Sloth, Finale) while retaining Lust
+- [x] Replace flat 2D image backdrops with real 3D procedural architecture (`RomanRuins.jsx` — fluted columns, fallen drums, monumental arches, Pantheon rotunda, reflective water)
+- [x] Implement Mousham.design camera pause / holding plateaus and station glances (`ScrollCameraRig.jsx`)
+- [x] Overhaul portrait frames with weathered Roman stone stele backing, bronze trim, and soft radial halos (`SinPortrait.jsx`)
+- [x] Refine Waypoint text cards with frosted dark Roman stele glass (`WaypointText.jsx`)
+- [x] Remove harsh rectangular backing on Finale figure in favor of celestial circular halo (`FinaleFigure.jsx`)
+- [x] Verify zero-warning linter (`oxlint`) and production build (`vite build`)

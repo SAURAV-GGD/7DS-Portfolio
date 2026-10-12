@@ -4,6 +4,7 @@ import { Billboard, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { TOTAL_DEPTH, FINALE_FRACTION } from '../config/sections'
 import finalePortrait from '../assets/portraits/finale.png'
+useTexture.preload(finalePortrait)
 
 const ENERGY_PARTICLE_COUNT = 90
 
@@ -66,16 +67,27 @@ export default function FinaleFigure({ cameraZRef }) {
 
   return (
     <group ref={groupRef} position={[0, 0.9, z]}>
+      {/* Volumetric Oculus Light Column descending from Pantheon ceiling */}
+      <mesh position={[0, 6, 0]}>
+        <cylinderGeometry args={[2.2, 3.8, 14, 32, 1, true]} />
+        <meshBasicMaterial
+          color="#ffaa66"
+          transparent
+          opacity={0.08}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
+      </mesh>
+
       <Billboard position={[0, 1.6, 0]}>
+        {/* Weathered Stone Stele Frame */}
         <mesh position={[0, 0, -0.04]}>
-          <planeGeometry args={[6.2, 8]} />
-          <meshBasicMaterial
-            color="#f2551e"
-            transparent
-            opacity={1}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-            toneMapped={false}
+          <boxGeometry args={[5.8, 7.6, 0.15]} />
+          <meshStandardMaterial
+            color="#18100a"
+            roughness={0.9}
+            metalness={0.1}
           />
         </mesh>
         <mesh>
@@ -111,9 +123,10 @@ export default function FinaleFigure({ cameraZRef }) {
         <meshBasicMaterial color="#e3f1ff" transparent opacity={1} blending={THREE.AdditiveBlending} toneMapped={false} />
       </mesh>
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.92, 0]}>
-        <circleGeometry args={[3, 48]} />
-        <meshBasicMaterial color="#ff6a2b" transparent opacity={1} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+      {/* Stone Altar Plinth at Base */}
+      <mesh position={[0, -1.0, 0]}>
+        <cylinderGeometry args={[3.2, 3.6, 0.8, 32]} />
+        <meshStandardMaterial color="#1a110a" roughness={0.92} metalness={0.06} />
       </mesh>
 
       <points ref={energyRef}>

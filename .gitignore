@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+.vercel
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +23,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Sensitive local tools and scripts with API keys
+.agents/
+scripts/
+
+# Loose temporary downloads
+* (1).*
+favicon_io (1)/

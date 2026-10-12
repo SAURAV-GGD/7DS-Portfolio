@@ -80,10 +80,11 @@
 - **GitHub**: https://github.com/SAURAV-GGD/HorizonTechX_Chatbot-NLP
 - **Year**: 2026
 
-### 4. Sentiment Analysis Dashboard ⭐ NEW (HorizonTechX)
-- **Desc**: TF-IDF + Logistic Regression sentiment classifier. ~95.6% test accuracy (per-class F1 up to 0.97) on 1,800-sample dataset across 3 text sources. Interactive Streamlit dashboard for live predictions and batch CSV analysis. 6 automated evaluation visuals (confusion matrix, sentiment distribution, word clouds, etc.).
-- **Tech**: Python, scikit-learn, Streamlit, Logistic Regression, TF-IDF
-- **GitHub**: https://github.com/SAURAV-GGD/HorizonTechX_Sentiment-Analysis
+### 4. LoveHub (lovehub.in) ⭐ FEATURED (Sin IV: LUST)
+- **Desc**: Full-stack digital romance & celebratory platform (proposals, birthdays, digital wishbooks, interactive celebration pages). Real-time message collecting, custom URL generation, responsive animations, and multi-step celebration journeys. Live at lovehub.in.
+- **Tech**: Next.js 15, TypeScript, Tailwind CSS, REST APIs, Vercel
+- **GitHub**: https://github.com/SAURAV-GGD/lovehub
+- **Live**: https://lovehub.in
 - **Year**: 2026
 
 ### 5. Real-Time Object Detection & Tracking ⭐ NEW (HorizonTechX)
