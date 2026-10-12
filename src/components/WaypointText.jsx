@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // Strict isolation: only the active waypoint is visible, never adjacent ones.
 const BAND = 0.022 // tight plateau where card is 100% visible
@@ -6,6 +6,17 @@ const FADE = 0.024 // smooth fade-in/fade-out falloff (total radius 0.046 < 0.06
 
 export default function WaypointText({ waypoint, scrollFraction, align }) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [viewMode, setViewMode] = useState('room')
+
+  useEffect(() => {
+    const handlePan = (e) => {
+      if (e.detail?.mode) {
+        setViewMode(e.detail.mode)
+      }
+    }
+    window.addEventListener('7ds-mobile-pan', handlePan)
+    return () => window.removeEventListener('7ds-mobile-pan', handlePan)
+  }, [])
 
   const dist = Math.abs(scrollFraction - waypoint.fraction)
   if (dist > BAND + FADE) return null
@@ -17,14 +28,17 @@ export default function WaypointText({ waypoint, scrollFraction, align }) {
 
   // Subtle editorial slide offset
   const slideOffset = (1 - rawProgress) * (align === 'left' ? -36 : 36)
+  const isPortraitMode = viewMode === 'portrait'
+  const effectiveOpacity = isPortraitMode ? 0 : opacity
 
   return (
     <div
       className="waypoint-inscription-card"
       style={{
-        transform: `translateX(${slideOffset}px)`,
-        opacity,
-        pointerEvents: opacity > 0.4 ? 'auto' : 'none',
+        transform: `translateX(${slideOffset}px) ${isPortraitMode ? 'translateY(24px)' : 'translateY(0)'}`,
+        opacity: effectiveOpacity,
+        pointerEvents: !isPortraitMode && opacity > 0.4 ? 'auto' : 'none',
+        transition: 'opacity 0.35s cubic-bezier(0.2, 0.9, 0.3, 1), transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1)',
       }}
     >
       {/* Classical Inscribed Inner Border */}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { WAYPOINTS } from '../config/sections'
 
 const STATION_RADIUS = 0.045
@@ -17,16 +17,20 @@ export default function MobileViewToggle({ fraction }) {
   )
   const isInside = Boolean(activeSin)
 
-  const [activeMode, setActiveMode] = useState('room')
+  const [userMode, setUserMode] = useState(null)
+  const [prevSinId, setPrevSinId] = useState(activeSin?.id)
   const [showSwipeHint, setShowSwipeHint] = useState(true)
 
   // Reset to default room view when entering a new chamber
-  useEffect(() => {
-    setActiveMode('room')
-  }, [activeSin?.id])
+  if (activeSin?.id !== prevSinId) {
+    setPrevSinId(activeSin?.id)
+    setUserMode(null)
+  }
+
+  const activeMode = userMode || 'room'
 
   const handleSelectMode = (mode, targetValue) => {
-    setActiveMode(mode)
+    setUserMode(mode)
     setShowSwipeHint(false)
     window.dispatchEvent(
       new CustomEvent('7ds-mobile-pan', { detail: { target: targetValue, mode } })
@@ -69,7 +73,7 @@ export default function MobileViewToggle({ fraction }) {
           role="tab"
           aria-selected={activeMode === 'tablet'}
           className={`mobile-view-btn ${activeMode === 'tablet' ? 'active' : ''}`}
-          onClick={() => handleSelectMode('tablet', 0.85)}
+          onClick={() => handleSelectMode('tablet', 1.0)}
           data-cursor="TABLET"
         >
           <span className="btn-icon">📜</span> TABLET

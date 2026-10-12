@@ -14,6 +14,7 @@ import wrath from '../assets/portraits/wrath.png'
 import sloth from '../assets/portraits/sloth.png'
 
 const PORTRAITS = { pride, greed, gluttony, lust, envy, wrath, sloth }
+useTexture.preload(Object.values(PORTRAITS))
 
 // Weathered Roman masonry PBR tones
 const STONE_WALL = '#281c15'
@@ -23,11 +24,6 @@ const BRONZE_GATE = '#18120c'
 
 function PortraitStele({ src, opacity }) {
   const texture = useTexture(src)
-  const [cloned] = useState(() => {
-    const c = texture.clone()
-    c.colorSpace = THREE.SRGBColorSpace
-    return c
-  })
 
   return (
     <group position={[0, 0, 0]}>
@@ -53,10 +49,11 @@ function PortraitStele({ src, opacity }) {
       <mesh position={[0, 0, 0.08]}>
         <planeGeometry args={[3.2, 4.5]} />
         <meshBasicMaterial
-          map={cloned}
+          map={texture}
           transparent
           opacity={opacity}
           toneMapped={false}
+          side={THREE.DoubleSide}
         />
       </mesh>
     </group>

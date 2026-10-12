@@ -51,6 +51,8 @@ function getCameraStationTransform(progress, isMobile = false) {
           isInside: s > 0.5,
           activeSinIndex: i,
           side,
+          zStation,
+          stationP: p,
         }
       }
 
@@ -64,6 +66,8 @@ function getCameraStationTransform(progress, isMobile = false) {
           isInside: true,
           activeSinIndex: i,
           side,
+          zStation,
+          stationP: p,
         }
       }
 
@@ -76,6 +80,8 @@ function getCameraStationTransform(progress, isMobile = false) {
           isInside: true,
           activeSinIndex: i,
           side,
+          zStation,
+          stationP: p,
         }
       }
 
@@ -89,6 +95,8 @@ function getCameraStationTransform(progress, isMobile = false) {
           isInside: s < 0.5,
           activeSinIndex: i,
           side,
+          zStation,
+          stationP: p,
         }
       }
 
@@ -101,6 +109,8 @@ function getCameraStationTransform(progress, isMobile = false) {
         isInside: false,
         activeSinIndex: i,
         side,
+        zStation,
+        stationP: p,
       }
     }
   }
@@ -114,17 +124,19 @@ function getCameraStationTransform(progress, isMobile = false) {
     isInside: false,
     activeSinIndex: -1,
     side: 1,
+    zStation: targetZ,
+    stationP: -1,
   }
 }
 
 export default function ScrollCameraRig({ scrollRef, cameraZRef }) {
   const mouseXRef = useRef(0)
   const currentPos = useRef(new THREE.Vector3(0, 1.6, 0))
-  const currentYaw = useRef(0)
+  const currentLook = useRef(new THREE.Vector3(0, 1.55, -10))
   const reducedMotionRef = useRef(false)
 
   // Mobile horizontal swipe gesture & quick toggle pan controller
-  // panTarget: -1.0 (focus on portrait) .. 0.0 (center) .. +1.0 (focus on tablet)
+  // panTarget: -1.0 (focus on portrait) .. 0.0 (room wide view) .. +1.0 (focus on tablet)
   const panTargetRef = useRef(0)
   const currentPanRef = useRef(0)
   const isInsideRoomRef = useRef(false)
@@ -161,22 +173,22 @@ export default function ScrollCameraRig({ scrollRef, cameraZRef }) {
         // If swipe is primarily horizontal, steer the camera between portrait and tablet
         if (Math.abs(dx) > Math.abs(dy) * 1.2 || isHorizontalSwipeRef.current) {
           isHorizontalSwipeRef.current = true
-          // Natural pan: swiping right reveals the portrait on the left (-), swiping left reveals tablet (+)
+          // Swiping right steers towards portrait (-1.0), swiping left steers towards tablet (+1.0)
           const sensitivity = 0.0055
           panTargetRef.current = THREE.MathUtils.clamp(
             panTargetRef.current - dx * sensitivity,
-            -1.2,
-            1.1
+            -1.0,
+            1.0
           )
           touchStartXRef.current = e.touches[0].clientX
         }
       }
     }
 
-    // Custom event listener for mobile quick-toggle pill buttons
+    // Custom event listener for mobile & desktop quick-toggle pill buttons
     const handleCustomPan = (e) => {
       if (typeof e.detail?.target === 'number') {
-        panTargetRef.current = e.detail.target
+        panTargetRef.current = THREE.MathUtils.clamp(e.detail.target, -1.0, 1.0)
       }
     }
 
@@ -204,9 +216,8 @@ export default function ScrollCameraRig({ scrollRef, cameraZRef }) {
     const isMobile = aspect < 1.0
 
     // Adaptive Camera Framing on Mobile Viewports
-    // Dynamically widens FOV on portrait phone screens so both portrait and tablet are visible
     const targetFov = isMobile
-      ? Math.min(76, 56 + Math.max(0, 1.0 - aspect) * 26)
+      ? Math.min(74, 56 + Math.max(0, 1.0 - aspect) * 22)
       : 56
 
     if (Math.abs(state.camera.fov - targetFov) > 0.1) {
@@ -218,66 +229,127 @@ export default function ScrollCameraRig({ scrollRef, cameraZRef }) {
     isInsideRoomRef.current = transform.isInside
     const t = state.clock.elapsedTime
 
-    // Walking footsteps bob and subtle camera sway
+    // Walking footsteps bob
     const isMoving =
       Math.abs(currentPos.current.z - transform.z) > 0.02 ||
       Math.abs(currentPos.current.x - transform.x) > 0.02
     const movingAmount = isMoving ? 1.0 : 0.2
     const motionAmount = reducedMotionRef.current ? 0 : movingAmount
     const bob = Math.sin(t * 2.4) * 0.03 * motionAmount
-    const sway = Math.sin(t * 1.2) * 0.025 * motionAmount
 
-    // Smooth inertia damping on camera position and yaw rotation
-    currentPos.current.x = THREE.MathUtils.damp(
-      currentPos.current.x,
-      transform.x + sway,
-      5.5,
-      delta
+    // Default Colonnade Walk Target Camera & Look Position
+    const defaultCam = new THREE.Vector3(transform.x, 1.6, transform.z)
+    const defaultLook = new THREE.Vector3(
+      transform.x + Math.sin(transform.yaw) * 10,
+      1.55,
+      transform.z - Math.cos(transform.yaw) * 10
     )
 
-    // Apply mobile horizontal pan offset when inside the room
-    // panTarget: -1.0 (focus on portrait) .. 0.0 (center) .. +1.0 (focus on tablet)
-    const effectivePanTarget = transform.isInside ? panTargetRef.current : 0
-    currentPanRef.current = THREE.MathUtils.damp(
-      currentPanRef.current,
-      effectivePanTarget,
-      5.5,
-      delta
-    )
+    let finalCamTarget = defaultCam
+    let finalLookTarget = defaultLook
 
-    // Calculate dynamic yaw rotation including mobile pan and mouse look
-    const sideSign = transform.side === -1 ? 1 : -1
-    const mobileYawOffset = currentPanRef.current * (isMobile ? 0.38 : 0.20) * sideSign
-    const mouseLook = reducedMotionRef.current ? 0 : mouseXRef.current * 0.12
+    // If inside or transitioning through a temple chamber, compute exact room-specific targets
+    if (transform.activeSinIndex >= 0 && transform.stationP !== undefined) {
+      const p = transform.stationP
+      const isLeft = transform.side === -1
+      const side = transform.side
+      const zStation = transform.zStation
 
-    currentPos.current.z = THREE.MathUtils.damp(
-      currentPos.current.z,
-      transform.z,
-      5.5,
-      delta
-    )
-    currentYaw.current = THREE.MathUtils.damp(
-      currentYaw.current,
-      transform.yaw + mobileYawOffset,
-      5.5,
-      delta
-    )
+      // Smooth damp pan target: -1 (portrait) .. 0 (room) .. +1 (tablet)
+      const effectivePanTarget = transform.isInside ? panTargetRef.current : 0
+      currentPanRef.current = THREE.MathUtils.damp(
+        currentPanRef.current,
+        effectivePanTarget,
+        5.5,
+        delta
+      )
 
-    const effectiveYaw = currentYaw.current + mouseLook
+      // ── ROOM VIEW TARGETS ───────────────────────────────────
+      // 1. Portrait Mode: camera glides in front of Saurav's character stele
+      const portraitCam = new THREE.Vector3(
+        side * (isMobile ? 6.2 : 6.8),
+        1.55,
+        zStation + (isLeft ? 3.0 : -3.0)
+      )
+      const portraitLook = new THREE.Vector3(
+        side * 10.1,
+        1.4,
+        zStation + (isLeft ? 4.3 : -4.3)
+      )
 
-    // Position camera at natural eye level
+      // 2. Room Mode: panoramic wide sanctuary view (framing tablet + portrait together)
+      const roomCam = new THREE.Vector3(
+        side * (isMobile ? 4.8 : 5.4),
+        1.6,
+        zStation + (isLeft ? 0.8 : -0.8)
+      )
+      const roomLook = new THREE.Vector3(
+        side * 10.3,
+        1.4,
+        zStation + (isLeft ? 1.8 : -1.8)
+      )
+
+      // 3. Tablet Mode: camera glides squarely in front of the Opus Quadratum brick tablet
+      const tabletCam = new THREE.Vector3(
+        side * (isMobile ? 5.8 : 6.5),
+        1.55,
+        zStation + (isLeft ? -0.8 : 0.8)
+      )
+      const tabletLook = new THREE.Vector3(
+        side * 10.4,
+        1.4,
+        zStation
+      )
+
+      // Interpolate between Room, Portrait, and Tablet based on currentPanRef
+      const pan = currentPanRef.current
+      const activeCam = new THREE.Vector3()
+      const activeLook = new THREE.Vector3()
+
+      if (pan < 0) {
+        const factor = Math.min(1, Math.max(0, -pan))
+        activeCam.lerpVectors(roomCam, portraitCam, factor)
+        activeLook.lerpVectors(roomLook, portraitLook, factor)
+      } else {
+        const factor = Math.min(1, Math.max(0, pan))
+        activeCam.lerpVectors(roomCam, tabletCam, factor)
+        activeLook.lerpVectors(roomLook, tabletLook, factor)
+      }
+
+      // Smoothly blend into the room view during entry and exit
+      let roomBlend = 0
+      if (p >= 0.20 && p < 0.38) {
+        roomBlend = smooth((p - 0.20) / 0.18)
+      } else if (p >= 0.38 && p < 0.66) {
+        roomBlend = 1.0
+      } else if (p >= 0.66 && p < 0.84) {
+        roomBlend = 1.0 - smooth((p - 0.66) / 0.18)
+      }
+
+      finalCamTarget = new THREE.Vector3().lerpVectors(defaultCam, activeCam, roomBlend)
+      finalLookTarget = new THREE.Vector3().lerpVectors(defaultLook, activeLook, roomBlend)
+    }
+
+    // Interactive mouse parallax look
+    if (!reducedMotionRef.current) {
+      finalLookTarget.z += mouseXRef.current * 0.35
+    }
+
+    // Smooth inertia damping on camera position and look target
+    currentPos.current.x = THREE.MathUtils.damp(currentPos.current.x, finalCamTarget.x, 5.0, delta)
+    currentPos.current.y = THREE.MathUtils.damp(currentPos.current.y, finalCamTarget.y, 5.0, delta)
+    currentPos.current.z = THREE.MathUtils.damp(currentPos.current.z, finalCamTarget.z, 5.0, delta)
+
+    currentLook.current.x = THREE.MathUtils.damp(currentLook.current.x, finalLookTarget.x, 5.0, delta)
+    currentLook.current.y = THREE.MathUtils.damp(currentLook.current.y, finalLookTarget.y, 5.0, delta)
+    currentLook.current.z = THREE.MathUtils.damp(currentLook.current.z, finalLookTarget.z, 5.0, delta)
+
     state.camera.position.set(
       currentPos.current.x,
-      1.6 + bob,
+      currentPos.current.y + bob,
       currentPos.current.z
     )
-
-    // Look along the dynamic yaw direction
-    const lookDistance = 10
-    const lookX = currentPos.current.x + Math.sin(effectiveYaw) * lookDistance
-    const lookZ = currentPos.current.z - Math.cos(effectiveYaw) * lookDistance
-
-    state.camera.lookAt(lookX, 1.55, lookZ)
+    state.camera.lookAt(currentLook.current.x, currentLook.current.y, currentLook.current.z)
 
     if (cameraZRef) {
       cameraZRef.current = currentPos.current.z
