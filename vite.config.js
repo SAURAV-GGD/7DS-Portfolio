@@ -34,6 +34,7 @@ export default defineConfig({
         '**/.git/**',
         '**/*.ttf',
         '**/*.woff2',
+        '**/*.glb',
         '**/RuinedSerif*',
       ],
     },

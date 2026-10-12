@@ -1,29 +1,125 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Billboard, useTexture } from '@react-three/drei'
+import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { TOTAL_DEPTH, FINALE_FRACTION } from '../config/sections'
-import finalePortrait from '../assets/portraits/finale.png'
-useTexture.preload(finalePortrait)
+
+// DROP-IN 3D MODEL PATH:
+// To use your own custom 3D model (e.g. exported from Blender, Polycam, Luma, Meshy),
+// simply place your file at 'public/models/statue.glb' (or change this path).
+// Centering, grounding, and heroic scale normalization happen automatically!
+const STATUE_MODEL_URL = '/models/statue.glb'
+useGLTF.preload(STATUE_MODEL_URL)
 
 const ENERGY_PARTICLE_COUNT = 90
 
-// The final chapter is a real illustration backed by physical glow, orbiting
-// energy emblems, and rising particles rather than the former capsule stand-in.
+function StatueMesh({ onPointerDown }) {
+  const { scene } = useGLTF(STATUE_MODEL_URL)
+
+  const { modelGroup, scale, height } = useMemo(() => {
+    const clone = scene.clone(true)
+    const box = new THREE.Box3().setFromObject(clone)
+    const size = new THREE.Vector3()
+    box.getSize(size)
+    const center = new THREE.Vector3()
+    box.getCenter(center)
+
+    // Center horizontally and seat cleanly on the plinth base (y = 0)
+    clone.position.set(-center.x, -box.min.y, -center.z)
+
+    // Classical Roman Carrara weathered marble stone PBR material
+    clone.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true
+        child.receiveShadow = true
+        child.material = new THREE.MeshStandardMaterial({
+          color: '#ebe3d8',
+          roughness: 0.68,
+          metalness: 0.07,
+          bumpScale: 0.04,
+        })
+      }
+    })
+
+    // Normalize to heroic stature (~4.2 Three.js world units tall)
+    const targetHeight = 4.2
+    const computedScale = size.y > 0 ? targetHeight / size.y : 1
+
+    return {
+      modelGroup: clone,
+      scale: computedScale,
+      height: targetHeight,
+    }
+  }, [scene])
+
+  return (
+    <group scale={scale}>
+      <primitive object={modelGroup} />
+
+      {/* Invisible hit cylinder for seamless 360 drag inspection */}
+      <mesh
+        position={[0, height * 0.5, 0]}
+        onPointerDown={onPointerDown}
+        visible={false}
+      >
+        <cylinderGeometry args={[2.2, 2.2, height * 1.25, 16]} />
+        <meshBasicMaterial transparent opacity={0} />
+      </mesh>
+    </group>
+  )
+}
+
 export default function FinaleFigure({ cameraZRef }) {
   const groupRef = useRef()
+  const rotatorRef = useRef()
+  const claudeEmblemRef = useRef()
+  const agyEmblemRef = useRef()
   const glowLeftRef = useRef()
   const glowRightRef = useRef()
   const energyRef = useRef()
 
-  const texture = useTexture(finalePortrait)
-  const [portraitTexture] = useState(() => {
-    const clone = texture.clone()
-    clone.colorSpace = THREE.SRGBColorSpace
-    return clone
-  })
+  const targetYawRef = useRef(0)
+  const currentYawRef = useRef(0)
+  const isDraggingRef = useRef(false)
+  const dragStartXRef = useRef(0)
+  const dragStartYawRef = useRef(0)
 
   const z = -FINALE_FRACTION * TOTAL_DEPTH
+
+  // 360° Drag interaction handlers
+  const handlePointerDown = useCallback((e) => {
+    e.stopPropagation()
+    isDraggingRef.current = true
+    dragStartXRef.current = e.clientX
+    dragStartYawRef.current = targetYawRef.current
+    document.body.style.cursor = 'grabbing'
+  }, [])
+
+  useEffect(() => {
+    const handlePointerMove = (e) => {
+      if (!isDraggingRef.current) return
+      const deltaX = e.clientX - dragStartXRef.current
+      // Smooth 360 inspection sensitivity
+      targetYawRef.current = dragStartYawRef.current + deltaX * 0.012
+    }
+
+    const handlePointerUp = () => {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false
+        document.body.style.cursor = 'auto'
+      }
+    }
+
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+    window.addEventListener('pointercancel', handlePointerUp)
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+      window.removeEventListener('pointercancel', handlePointerUp)
+      document.body.style.cursor = 'auto'
+    }
+  }, [])
 
   const [energyPositions] = useState(() => {
     const positions = new Float32Array(ENERGY_PARTICLE_COUNT * 3)
@@ -41,15 +137,53 @@ export default function FinaleFigure({ cameraZRef }) {
     const distance = Math.abs((cameraZRef.current ?? 0) - z)
     const opacity = THREE.MathUtils.smoothstep(26 - distance, 0, 12)
 
+    // Continuous turntable spin when user is not actively dragging
+    if (!isDraggingRef.current) {
+      targetYawRef.current += delta * 0.28
+    }
+
+    // Smooth inertia / momentum damping
+    currentYawRef.current = THREE.MathUtils.damp(
+      currentYawRef.current,
+      targetYawRef.current,
+      6.0,
+      delta
+    )
+
+    if (rotatorRef.current) {
+      rotatorRef.current.rotation.y = currentYawRef.current
+    }
+
+    // Floating levitation bob
     groupRef.current.position.y = 0.9 + Math.sin(time * 0.72) * 0.11
-    groupRef.current.rotation.y = Math.sin(time * 0.28) * 0.035
+
+    // Proximity fade
     groupRef.current.traverse((object) => {
-      if (object.material?.opacity !== undefined) object.material.opacity = opacity
+      if (object.material && object.material.opacity !== undefined) {
+        object.material.opacity = opacity
+      }
     })
+
+    // Orbiting celestial AI emblems around the statue
+    const orbitAngle = time * 0.72
+    const orbitRadius = 2.5
+    if (claudeEmblemRef.current) {
+      claudeEmblemRef.current.position.x = Math.cos(orbitAngle) * orbitRadius
+      claudeEmblemRef.current.position.z = Math.sin(orbitAngle) * orbitRadius
+      claudeEmblemRef.current.position.y = 1.9 + Math.sin(time * 1.5) * 0.22
+      claudeEmblemRef.current.rotation.y = orbitAngle
+    }
+    if (agyEmblemRef.current) {
+      agyEmblemRef.current.position.x = Math.cos(orbitAngle + Math.PI) * orbitRadius
+      agyEmblemRef.current.position.z = Math.sin(orbitAngle + Math.PI) * orbitRadius
+      agyEmblemRef.current.position.y = 1.9 + Math.sin(time * 1.5 + Math.PI) * 0.22
+      agyEmblemRef.current.rotation.y = orbitAngle + Math.PI
+    }
 
     if (glowLeftRef.current) glowLeftRef.current.intensity = opacity * (6 + Math.sin(time * 3.1) * 1.8)
     if (glowRightRef.current) glowRightRef.current.intensity = opacity * (6 + Math.sin(time * 3.1 + 1.4) * 1.8)
 
+    // Rising transcendence embers
     if (energyRef.current) {
       const positions = energyRef.current.geometry.attributes.position.array
       for (let i = 0; i < ENERGY_PARTICLE_COUNT; i += 1) {
@@ -80,55 +214,58 @@ export default function FinaleFigure({ cameraZRef }) {
         />
       </mesh>
 
-      <Billboard position={[0, 1.6, 0]}>
-        {/* Weathered Stone Stele Frame */}
-        <mesh position={[0, 0, -0.04]}>
-          <boxGeometry args={[5.8, 7.6, 0.15]} />
-          <meshStandardMaterial
-            color="#18100a"
-            roughness={0.9}
-            metalness={0.1}
-          />
+      {/* Rotating 3D Greek/Roman Stone Statue */}
+      <group ref={rotatorRef} position={[0, 0, 0]}>
+        <StatueMesh onPointerDown={handlePointerDown} />
+      </group>
+
+      {/* Classical Roman Fluted Pedestal Plinth beneath the sculpture */}
+      <group position={[0, -0.65, 0]}>
+        <mesh position={[0, 0.45, 0]}>
+          <cylinderGeometry args={[1.5, 1.6, 0.15, 32]} />
+          <meshStandardMaterial color="#2a1e16" roughness={0.78} metalness={0.12} />
+        </mesh>
+        <mesh position={[0, 0.36, 0]}>
+          <torusGeometry args={[1.52, 0.02, 12, 32]} />
+          <meshStandardMaterial color="#c88d3e" roughness={0.3} metalness={0.8} />
+        </mesh>
+        <mesh position={[0, 0, 0]}>
+          <cylinderGeometry args={[1.35, 1.45, 0.7, 32]} />
+          <meshStandardMaterial color="#211710" roughness={0.88} metalness={0.08} />
+        </mesh>
+        <mesh position={[0, -0.45, 0]}>
+          <cylinderGeometry args={[2.0, 2.3, 0.35, 32]} />
+          <meshStandardMaterial color="#160e09" roughness={0.92} metalness={0.06} />
+        </mesh>
+      </group>
+
+      {/* Orbiting Claude-inspired orange energy emblem */}
+      <group ref={claudeEmblemRef} position={[-2.5, 2.0, 0]}>
+        <pointLight ref={glowLeftRef} color="#ff7a30" distance={6} intensity={6} />
+        <mesh rotation={[Math.PI / 4, 0, 0]}>
+          <torusGeometry args={[0.24, 0.02, 8, 32]} />
+          <meshBasicMaterial color="#ff9a55" transparent opacity={1} blending={THREE.AdditiveBlending} toneMapped={false} />
         </mesh>
         <mesh>
-          <planeGeometry args={[5.4, 7.2]} />
-          <meshBasicMaterial
-            map={portraitTexture}
-            transparent
-            opacity={1}
-            toneMapped={false}
-          />
+          <icosahedronGeometry args={[0.13, 1]} />
+          <meshBasicMaterial color="#ffd0a5" transparent opacity={1} blending={THREE.AdditiveBlending} toneMapped={false} />
         </mesh>
-      </Billboard>
+      </group>
 
-      {/* Claude-inspired orange energy emblem — left hand. */}
-      <pointLight ref={glowLeftRef} position={[-2.15, 2.1, 0.35]} color="#ff7a30" distance={6} />
-      <mesh position={[-2.15, 2.1, 0.22]} rotation={[Math.PI / 4, 0, 0]}>
-        <torusGeometry args={[0.22, 0.018, 8, 32]} />
-        <meshBasicMaterial color="#ff9a55" transparent opacity={1} blending={THREE.AdditiveBlending} toneMapped={false} />
-      </mesh>
-      <mesh position={[-2.15, 2.1, 0.24]}>
-        <icosahedronGeometry args={[0.12, 1]} />
-        <meshBasicMaterial color="#ffd0a5" transparent opacity={1} blending={THREE.AdditiveBlending} toneMapped={false} />
-      </mesh>
+      {/* Orbiting Antigravity-inspired blue-white energy emblem */}
+      <group ref={agyEmblemRef} position={[2.5, 2.0, 0]}>
+        <pointLight ref={glowRightRef} color="#5ba3ff" distance={6} intensity={6} />
+        <mesh rotation={[-Math.PI / 4, 0, 0]}>
+          <torusGeometry args={[0.24, 0.02, 8, 32]} />
+          <meshBasicMaterial color="#79b8ff" transparent opacity={1} blending={THREE.AdditiveBlending} toneMapped={false} />
+        </mesh>
+        <mesh>
+          <octahedronGeometry args={[0.14, 0]} />
+          <meshBasicMaterial color="#e3f1ff" transparent opacity={1} blending={THREE.AdditiveBlending} toneMapped={false} />
+        </mesh>
+      </group>
 
-      {/* Antigravity-inspired blue-white energy emblem — right hand. */}
-      <pointLight ref={glowRightRef} position={[2.15, 2.1, 0.35]} color="#5ba3ff" distance={6} />
-      <mesh position={[2.15, 2.1, 0.22]} rotation={[-Math.PI / 4, 0, 0]}>
-        <torusGeometry args={[0.22, 0.018, 8, 32]} />
-        <meshBasicMaterial color="#79b8ff" transparent opacity={1} blending={THREE.AdditiveBlending} toneMapped={false} />
-      </mesh>
-      <mesh position={[2.15, 2.1, 0.24]}>
-        <octahedronGeometry args={[0.13, 0]} />
-        <meshBasicMaterial color="#e3f1ff" transparent opacity={1} blending={THREE.AdditiveBlending} toneMapped={false} />
-      </mesh>
-
-      {/* Stone Altar Plinth at Base */}
-      <mesh position={[0, -1.0, 0]}>
-        <cylinderGeometry args={[3.2, 3.6, 0.8, 32]} />
-        <meshStandardMaterial color="#1a110a" roughness={0.92} metalness={0.06} />
-      </mesh>
-
+      {/* Rising Transcendence Embers */}
       <points ref={energyRef}>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" count={ENERGY_PARTICLE_COUNT} array={energyPositions} itemSize={3} />

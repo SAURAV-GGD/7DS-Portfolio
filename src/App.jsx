@@ -318,7 +318,7 @@ export default function App() {
           textAlign: 'center',
           opacity: finaleOpacity,
           zIndex: 10,
-          pointerEvents: finaleOpacity > 0.1 ? 'auto' : 'none',
+          pointerEvents: 'none',
           transition: 'opacity 0.25s ease',
         }}
       >
@@ -329,10 +329,30 @@ export default function App() {
             letterSpacing: '0.3em',
             textTransform: 'uppercase',
             color: '#ff8a4c',
-            marginBottom: 10,
+            marginBottom: 8,
           }}
         >
           ∞ — TRANSCENDENCE
+        </div>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 7,
+            fontFamily: "'DM Mono', monospace",
+            fontSize: 10,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: '#e8c9ad',
+            background: 'rgba(26, 17, 12, 0.75)',
+            border: '1px solid rgba(255, 138, 76, 0.35)',
+            borderRadius: 20,
+            padding: '4px 12px',
+            marginBottom: 12,
+            backdropFilter: 'blur(6px)',
+          }}
+        >
+          <span style={{ color: '#ff8a4c' }}>↻</span> 360° SCULPTURE — DRAG TO ROTATE
         </div>
         <h2
           style={{
@@ -367,7 +387,7 @@ export default function App() {
           className="hud-resume-btn"
           data-cursor="DOSSIER"
           onClick={() => jumpToFraction(0.98)}
-          style={{ marginTop: 18 }}
+          style={{ marginTop: 18, pointerEvents: 'auto' }}
         >
           VIEW TECHNICAL ARCHIVE & DOSSIER <ArrowDown />
         </button>
