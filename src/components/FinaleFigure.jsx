@@ -4,11 +4,10 @@ import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { TOTAL_DEPTH, FINALE_FRACTION } from '../config/sections'
 
-// DROP-IN 3D MODEL PATH:
-// To use your own custom 3D model (e.g. exported from Blender, Polycam, Luma, Meshy),
-// simply place your file at 'public/models/statue.glb' (or change this path).
-// Centering, grounding, and heroic scale normalization happen automatically!
-const STATUE_MODEL_URL = '/models/statue.glb'
+// ACTIVE 3D MODEL PATH:
+// Using Meshy AI Hercules Triumphant (8.28 MB optimized game-ready 16k topology).
+// Preserves rich embedded AI diffuse stone texture, roughness, and tangent-space normal maps.
+const STATUE_MODEL_URL = '/models/Meshy_AI_Hercules_Triumphant_1012183917_texture.glb'
 useGLTF.preload(STATUE_MODEL_URL)
 
 const ENERGY_PARTICLE_COUNT = 90
@@ -27,22 +26,34 @@ function StatueMesh({ onPointerDown }) {
     // Center horizontally and seat cleanly on the plinth base (y = 0)
     clone.position.set(-center.x, -box.min.y, -center.z)
 
-    // Classical Roman Carrara weathered marble stone PBR material
+    // Preserve and enhance Meshy AI classical stone PBR materials
     clone.traverse((child) => {
       if (child.isMesh) {
         child.castShadow = true
         child.receiveShadow = true
-        child.material = new THREE.MeshStandardMaterial({
-          color: '#ebe3d8',
-          roughness: 0.68,
-          metalness: 0.07,
-          bumpScale: 0.04,
-        })
+        if (child.material) {
+          if (child.material.map) {
+            child.material.map.colorSpace = THREE.SRGBColorSpace
+            child.material.roughness = 0.74
+            child.material.metalness = 0.06
+            if (child.material.normalMap) {
+              child.material.normalScale = new THREE.Vector2(1.15, 1.15)
+            }
+            child.material.needsUpdate = true
+          } else {
+            child.material = new THREE.MeshStandardMaterial({
+              color: '#ebe3d8',
+              roughness: 0.68,
+              metalness: 0.07,
+              bumpScale: 0.04,
+            })
+          }
+        }
       }
     })
 
-    // Normalize to heroic stature (~4.2 Three.js world units tall)
-    const targetHeight = 4.2
+    // Heroic statue scale (~4.6 Three.js world units tall)
+    const targetHeight = 4.6
     const computedScale = size.y > 0 ? targetHeight / size.y : 1
 
     return {
@@ -215,7 +226,7 @@ export default function FinaleFigure({ cameraZRef }) {
       </mesh>
 
       {/* Rotating 3D Greek/Roman Stone Statue */}
-      <group ref={rotatorRef} position={[0, 0, 0]}>
+      <group ref={rotatorRef} position={[0, -0.12, 0]}>
         <StatueMesh onPointerDown={handlePointerDown} />
       </group>
 
