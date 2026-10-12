@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { WAYPOINTS } from '../config/sections'
 
 const STATION_RADIUS = 0.045
@@ -18,13 +18,12 @@ export default function MobileViewToggle({ fraction }) {
   const isInside = Boolean(activeSin)
 
   const [activeMode, setActiveMode] = useState('room')
-  const [prevSinId, setPrevSinId] = useState(activeSin?.id || null)
   const [showSwipeHint, setShowSwipeHint] = useState(true)
 
-  if (activeSin?.id !== prevSinId) {
-    setPrevSinId(activeSin?.id || null)
+  // Reset to default room view when entering a new chamber
+  useEffect(() => {
     setActiveMode('room')
-  }
+  }, [activeSin?.id])
 
   const handleSelectMode = (mode, targetValue) => {
     setActiveMode(mode)
