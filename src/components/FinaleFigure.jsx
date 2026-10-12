@@ -11,7 +11,7 @@ import RomanTorch from './RomanTorch'
 const STATUE_MODEL_URL = '/models/Meshy_AI_Hercules_Triumphant_1012183917_texture.glb'
 useGLTF.preload(STATUE_MODEL_URL)
 
-const ENERGY_PARTICLE_COUNT = 90
+const ENERGY_PARTICLE_COUNT = 24
 
 function StatueMesh({ onPointerDown }) {
   const { scene } = useGLTF(STATUE_MODEL_URL)
@@ -33,22 +33,23 @@ function StatueMesh({ onPointerDown }) {
         child.castShadow = true
         child.receiveShadow = true
         if (child.material) {
-          if (child.material.map) {
-            child.material.map.colorSpace = THREE.SRGBColorSpace
-            child.material.roughness = 0.74
-            child.material.metalness = 0.06
-            if (child.material.normalMap) {
-              child.material.normalScale = new THREE.Vector2(1.15, 1.15)
+          const mats = Array.isArray(child.material) ? child.material : [child.material]
+          mats.forEach((mat) => {
+            if (mat.map) {
+              mat.map.colorSpace = THREE.SRGBColorSpace
+              mat.roughness = 0.58 // satin finish highlights muscular form and chiseled definition
+              mat.metalness = 0.04
+              if (mat.normalMap) {
+                mat.normalScale = new THREE.Vector2(1.3, 1.3)
+              }
+              mat.needsUpdate = true
+            } else {
+              mat.color = new THREE.Color('#eae2d5')
+              mat.roughness = 0.58
+              mat.metalness = 0.05
+              mat.needsUpdate = true
             }
-            child.material.needsUpdate = true
-          } else {
-            child.material = new THREE.MeshStandardMaterial({
-              color: '#ebe3d8',
-              roughness: 0.68,
-              metalness: 0.07,
-              bumpScale: 0.04,
-            })
-          }
+          })
         }
       }
     })
@@ -89,6 +90,10 @@ export default function FinaleFigure({ cameraZRef }) {
   const glowLeftRef = useRef()
   const glowRightRef = useRef()
   const energyRef = useRef()
+  const keyLightRef = useRef()
+  const fillLightRef = useRef()
+  const topRimRef = useRef()
+  const bounceLightRef = useRef()
 
   const targetYawRef = useRef(0)
   const currentYawRef = useRef(0)
@@ -176,6 +181,12 @@ export default function FinaleFigure({ cameraZRef }) {
       }
     })
 
+    // Sculptural museum lighting focused on Hercules
+    if (keyLightRef.current) keyLightRef.current.intensity = opacity * 2.8
+    if (fillLightRef.current) fillLightRef.current.intensity = opacity * 1.2
+    if (topRimRef.current) topRimRef.current.intensity = opacity * 1.6
+    if (bounceLightRef.current) bounceLightRef.current.intensity = opacity * 0.85
+
     // Orbiting celestial AI emblems around the statue
     const orbitAngle = time * 0.72
     const orbitRadius = 2.5
@@ -256,6 +267,41 @@ export default function FinaleFigure({ cameraZRef }) {
         <StatueMesh onPointerDown={handlePointerDown} />
       </group>
 
+      {/* ── Focused Museum Gallery Lighting on Hercules (Illuminates GLB Details, Muscles & Normal Relief) ── */}
+      {/* Warm alabaster Key Light from upper-front right: carves out facial features, chest, and musculature */}
+      <directionalLight
+        ref={keyLightRef}
+        position={[2.0, 3.8, 3.2]}
+        color="#fff5eb"
+        intensity={2.8}
+      />
+
+      {/* Soft stone Fill Light from front-left: fills shadows gracefully during 360° inspection */}
+      <directionalLight
+        ref={fillLightRef}
+        position={[-2.4, 2.8, 2.8]}
+        color="#ded7ce"
+        intensity={1.2}
+      />
+
+      {/* Golden Top Rim / Hair Light: sculpts shoulders, raised arms, and crown */}
+      <pointLight
+        ref={topRimRef}
+        position={[0, 4.8, -1.8]}
+        color="#ffe2b8"
+        intensity={1.6}
+        distance={7.0}
+      />
+
+      {/* Pedestal Upward Bounce Light: reveals legs, feet, and classical plinth details */}
+      <pointLight
+        ref={bounceLightRef}
+        position={[0, 0.4, 2.2]}
+        color="#f2d8b8"
+        intensity={0.85}
+        distance={4.5}
+      />
+
       {/* Classical Roman Fluted Pedestal Plinth beneath the sculpture */}
       <group position={[0, -0.65, 0]}>
         <mesh position={[0, 0.45, 0]}>
@@ -302,16 +348,16 @@ export default function FinaleFigure({ cameraZRef }) {
         </mesh>
       </group>
 
-      {/* Rising Transcendence Embers */}
+      {/* Rising Transcendence Embers (reduced by >70% in count and opacity so GLB details are pristine) */}
       <points ref={energyRef}>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" count={ENERGY_PARTICLE_COUNT} array={energyPositions} itemSize={3} />
         </bufferGeometry>
         <pointsMaterial
-          size={0.045}
+          size={0.018}
           color="#ffb066"
           transparent
-          opacity={1}
+          opacity={0.3}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
           sizeAttenuation

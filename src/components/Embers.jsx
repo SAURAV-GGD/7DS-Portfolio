@@ -22,8 +22,8 @@ const ASH_COLOR = new THREE.Color('#8a7a6a')
 export default function Embers({ cameraZRef }) {
   const points = useRef()
   const isCompactViewport = typeof window !== 'undefined' && window.innerWidth < 768
-  const emberCount = isCompactViewport ? 900 : 1800
-  const ashCount = isCompactViewport ? 350 : 700
+  const emberCount = isCompactViewport ? 260 : 520
+  const ashCount = isCompactViewport ? 100 : 200
   const total = emberCount + ashCount
 
   const [{ positions, colors, sizes, seeds, types }] = useState(() => {
@@ -43,18 +43,18 @@ export default function Embers({ cameraZRef }) {
       seeds[i] = Math.random()
 
       if (isAsh) {
-        // Ash — grey, larger
+        // Ash — grey, subtle floating
         colors[i * 3] = ASH_COLOR.r
         colors[i * 3 + 1] = ASH_COLOR.g
         colors[i * 3 + 2] = ASH_COLOR.b
-        sizes[i] = 5 + Math.random() * 7
+        sizes[i] = 2.5 + Math.random() * 3.5
       } else {
-        // Ember — warm colors, varied size
+        // Ember — warm colors, delicate specks
         const c = EMBER_COLORS[Math.floor(Math.random() * EMBER_COLORS.length)]
         colors[i * 3] = c.r
         colors[i * 3 + 1] = c.g
         colors[i * 3 + 2] = c.b
-        sizes[i] = 4 + Math.random() * 10
+        sizes[i] = 2.0 + Math.random() * 4.5
       }
     }
     return { positions, colors, sizes, seeds, types }
@@ -118,7 +118,7 @@ export default function Embers({ cameraZRef }) {
       </bufferGeometry>
       <shaderMaterial
         transparent
-        opacity={0.85}
+        opacity={0.65}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
         vertexColors
@@ -129,7 +129,7 @@ export default function Embers({ cameraZRef }) {
             vColor = color;
             vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
             float dist = max(1.8, -modelViewPosition.z);
-            gl_PointSize = clamp(size * (22.0 / dist), 1.0, 16.0);
+            gl_PointSize = clamp(size * (14.0 / dist), 1.0, 7.5);
             gl_Position = projectionMatrix * modelViewPosition;
           }
         `}
@@ -138,7 +138,7 @@ export default function Embers({ cameraZRef }) {
           void main() {
             float distanceFromCenter = length(gl_PointCoord - vec2(0.5));
             if (distanceFromCenter > 0.5) discard;
-            float alpha = smoothstep(0.5, 0.08, distanceFromCenter) * 0.75;
+            float alpha = smoothstep(0.5, 0.12, distanceFromCenter) * 0.45;
             gl_FragColor = vec4(vColor, alpha);
           }
         `}

@@ -60,15 +60,15 @@ export default function Scene({ scrollRef }) {
 
       <EffectComposer>
         <Bloom
-          intensity={0.65}
-          luminanceThreshold={0.68}
+          intensity={0.55}
+          luminanceThreshold={0.75}
           luminanceSmoothing={0.35}
           mipmapBlur
         />
         <DepthOfField
           focusDistance={0.016}
           focalLength={0.024}
-          bokehScale={1.3}
+          bokehScale={0.35}
           height={480}
         />
         <Vignette eskil={false} offset={0.14} darkness={0.95} />
