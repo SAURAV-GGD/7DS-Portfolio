@@ -9,6 +9,10 @@ import MagneticCursor from './components/MagneticCursor'
 import { useAtmosphericAudio } from './components/AudioEngine'
 import { WAYPOINTS } from './config/sections'
 import resumeUrl from './assets/Saurav_Kumar_Resume-1 (1).pdf'
+import { usePerformanceQuality } from './hooks/usePerformanceQuality'
+import PrivacyPolicyModal from './components/PrivacyPolicyModal'
+import CookiePolicyModal from './components/CookiePolicyModal'
+import CookieConsentBanner from './components/CookieConsentBanner'
 
 import pridePortrait from './assets/portraits/pride.png'
 import greedPortrait from './assets/portraits/greed.png'
@@ -59,6 +63,30 @@ export default function App() {
   const [fraction, setFraction] = useState(0)
   const scrollRef = useRef(0)
   const lenisRef = useRef(null)
+
+  const { isSmoothMode, toggleQualityMode, config: perfConfig } = usePerformanceQuality()
+  const [privacyOpen, setPrivacyOpen] = useState(false)
+  const [cookiesOpen, setCookiesOpen] = useState(false)
+
+  // Listen for hash routes (#privacy, #cookies)
+  useEffect(() => {
+    const checkHash = () => {
+      const hash = window.location.hash
+      const path = window.location.pathname
+      if (hash === '#privacy' || path === '/privacy') {
+        setPrivacyOpen(true)
+      } else if (hash === '#cookies' || path === '/cookies') {
+        setCookiesOpen(true)
+      }
+    }
+    checkHash()
+    window.addEventListener('hashchange', checkHash)
+    window.addEventListener('popstate', checkHash)
+    return () => {
+      window.removeEventListener('hashchange', checkHash)
+      window.removeEventListener('popstate', checkHash)
+    }
+  }, [])
 
   const { isPlaying: isPlayingSound, toggleSound } = useAtmosphericAudio()
 
@@ -135,6 +163,8 @@ export default function App() {
         onToggleSound={toggleSound}
         onJumpToFraction={jumpToFraction}
         resumeUrl={resumeUrl}
+        isSmoothMode={isSmoothMode}
+        onToggleQuality={toggleQualityMode}
       />
 
       {/* 3B. Mobile Room View Switcher & Gesture Controller */}
@@ -142,7 +172,7 @@ export default function App() {
 
       {/* 4. Full-Screen 3D React Three Fiber Wasteland Scene */}
       <div className="scene-canvas-container" aria-hidden="true">
-        <Scene scrollRef={scrollRef} />
+        <Scene scrollRef={scrollRef} perfConfig={perfConfig} />
       </div>
 
       {/* Subtle overlays */}
@@ -561,6 +591,24 @@ export default function App() {
             <a href="https://www.instagram.com/_sxurv_/" target="_blank" rel="noreferrer" data-cursor="INSTA">Instagram <ArrowUpRight /></a>
             <a href="https://lovehub.in" target="_blank" rel="noreferrer" data-cursor="LOVEHUB">LoveHub <ArrowUpRight /></a>
             <a href="https://saurav-ggd-portfolio.vercel.app/" target="_blank" rel="noreferrer" data-cursor="OLD">Burning Portfolio <ArrowUpRight /></a>
+            <button
+              type="button"
+              className="text-link"
+              data-cursor="PRIVACY"
+              onClick={() => setPrivacyOpen(true)}
+              style={{ background: 'transparent', border: 'none', color: '#a89a8a', cursor: 'pointer', padding: 0 }}
+            >
+              Privacy Policy
+            </button>
+            <button
+              type="button"
+              className="text-link"
+              data-cursor="COOKIES"
+              onClick={() => setCookiesOpen(true)}
+              style={{ background: 'transparent', border: 'none', color: '#a89a8a', cursor: 'pointer', padding: 0 }}
+            >
+              Cookie Policy
+            </button>
           </div>
           <button
             type="button"
@@ -573,6 +621,13 @@ export default function App() {
           </button>
         </footer>
       </main>
+
+      {/* Legal & Compliance Modals */}
+      <PrivacyPolicyModal isOpen={privacyOpen} onClose={() => setPrivacyOpen(false)} />
+      <CookiePolicyModal isOpen={cookiesOpen} onClose={() => setCookiesOpen(false)} />
+
+      {/* Cookie & Performance Preferences Consent Banner */}
+      <CookieConsentBanner onOpenCookies={() => setCookiesOpen(true)} />
 
       {/* Scroll track height spacer */}
       <div className="scroll-spacer" aria-hidden="true" style={{ height: `${SCROLL_PAGES * 100}vh` }} />

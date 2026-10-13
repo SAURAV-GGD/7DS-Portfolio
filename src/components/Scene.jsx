@@ -10,14 +10,21 @@ import RomanRoom from './RomanRoom'
 import FinaleFigure from './FinaleFigure'
 import { WAYPOINTS, TOTAL_DEPTH } from '../config/sections'
 
-export default function Scene({ scrollRef }) {
+export default function Scene({ scrollRef, perfConfig }) {
   const cameraZRef = useRef(0)
+  const isSmooth = perfConfig?.isSmoothMode ?? false
+  const dpr = perfConfig?.dpr ?? (isSmooth ? [1, 1.15] : [1, 1.5])
 
   return (
     <Canvas
       camera={{ fov: 56, near: 0.1, far: 280, position: [0, 1.6, 0] }}
-      gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-      dpr={[1, 1.75]}
+      gl={{
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance',
+        stencil: false,
+      }}
+      dpr={dpr}
     >
       <color attach="background" args={['#0c0806']} />
       <fog attach="fog" args={['#0e0906', 15, 120]} />
@@ -58,19 +65,21 @@ export default function Scene({ scrollRef }) {
         <ScrollCameraRig scrollRef={scrollRef} cameraZRef={cameraZRef} />
       </Suspense>
 
-      <EffectComposer>
+      <EffectComposer disableNormalPass multisampling={isSmooth ? 0 : 2}>
         <Bloom
-          intensity={0.55}
+          intensity={isSmooth ? 0.4 : 0.55}
           luminanceThreshold={0.75}
           luminanceSmoothing={0.35}
-          mipmapBlur
+          mipmapBlur={!isSmooth}
         />
-        <DepthOfField
-          focusDistance={0.016}
-          focalLength={0.024}
-          bokehScale={0.35}
-          height={480}
-        />
+        {!isSmooth && (
+          <DepthOfField
+            focusDistance={0.016}
+            focalLength={0.024}
+            bokehScale={0.3}
+            height={360}
+          />
+        )}
         <Vignette eskil={false} offset={0.14} darkness={0.95} />
       </EffectComposer>
     </Canvas>

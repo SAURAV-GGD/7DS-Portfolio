@@ -89,20 +89,36 @@ export default function LoadingScreen({ onComplete }) {
   // Stage 2 — complete
   useEffect(() => {
     if (stage === 2 && onComplete) {
-      const timer = setTimeout(onComplete, 300)
+      const timer = setTimeout(onComplete, 200)
       return () => clearTimeout(timer)
     }
   }, [stage, onComplete])
 
-  // Generate sandstorm particles
+  const handleSkip = () => {
+    setStage(2)
+    if (onComplete) onComplete()
+  }
+
+  // Keyboard skip listener (Escape, Space, Enter)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') {
+        handleSkip()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  // Generate lightweight sandstorm particles (45 instead of 200 for 60fps)
   const [particles] = useState(() =>
-    Array.from({ length: 200 }, () => ({
+    Array.from({ length: 45 }, () => ({
       x: Math.random() * 100,
       y: Math.random() * 100,
-      size: 1 + Math.random() * 4,
+      size: 2 + Math.random() * 5,
       speed: 0.5 + Math.random() * 2,
-      opacity: 0.2 + Math.random() * 0.6,
-      delay: Math.random() * 2,
+      opacity: 0.3 + Math.random() * 0.5,
+      delay: Math.random() * 1.5,
     }))
   )
 
@@ -299,6 +315,41 @@ export default function LoadingScreen({ onComplete }) {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Skip button for immediate instant access */}
+      {stage < 2 && (
+        <button
+          type="button"
+          onClick={handleSkip}
+          style={{
+            position: 'absolute',
+            bottom: 24,
+            right: 24,
+            zIndex: 10,
+            background: 'rgba(26, 17, 12, 0.75)',
+            border: '1px solid rgba(255, 138, 76, 0.4)',
+            color: '#ff9e58',
+            fontFamily: "'DM Mono', monospace",
+            fontSize: 11,
+            letterSpacing: '0.15em',
+            padding: '6px 16px',
+            borderRadius: 20,
+            cursor: 'pointer',
+            backdropFilter: 'blur(6px)',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 138, 76, 0.2)'
+            e.currentTarget.style.borderColor = '#ff8a4c'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(26, 17, 12, 0.75)'
+            e.currentTarget.style.borderColor = 'rgba(255, 138, 76, 0.4)'
+          }}
+        >
+          SKIP INTRO [ESC] ↵
+        </button>
       )}
 
       {/* CSS animations */}

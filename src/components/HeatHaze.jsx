@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -66,31 +66,36 @@ const heatHazeFragmentShader = `
 export default function HeatHaze() {
   const materialRef = useRef()
 
+  const sharedMaterial = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      vertexShader: heatHazeVertexShader,
+      fragmentShader: heatHazeFragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uColor: { value: new THREE.Color('#ff5511') },
+      },
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+    })
+  }, [])
+
   useFrame((state) => {
-    if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value = state.clock.elapsedTime
-    }
+    sharedMaterial.uniforms.uTime.value = state.clock.elapsedTime
   })
 
   return (
     <group>
-      {/* Ground heat haze sheets along the pathway */}
+      {/* Ground heat haze sheets along the pathway with lightweight 1x1 geometry */}
       {[25, 60, 95, 130, 165].map((zPos, idx) => (
-        <mesh key={idx} position={[0, -0.6, -zPos]} rotation={[-Math.PI / 2.3, 0, 0]}>
-          <planeGeometry args={[26, 32, 16, 16]} />
-          <shaderMaterial
-            ref={idx === 0 ? materialRef : undefined}
-            vertexShader={heatHazeVertexShader}
-            fragmentShader={heatHazeFragmentShader}
-            uniforms={{
-              uTime: { value: 0 },
-              uColor: { value: new THREE.Color('#ff5511') },
-            }}
-            transparent
-            depthWrite={false}
-            blending={THREE.AdditiveBlending}
-            side={THREE.DoubleSide}
-          />
+        <mesh
+          key={idx}
+          position={[0, -0.6, -zPos]}
+          rotation={[-Math.PI / 2.3, 0, 0]}
+          material={sharedMaterial}
+        >
+          <planeGeometry args={[26, 32, 1, 1]} />
         </mesh>
       ))}
     </group>

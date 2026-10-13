@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Canonical Sitemap for 7DS Portfolio
+Sitemap: https://saurav-ggd-portfolio.vercel.app/sitemap.xml

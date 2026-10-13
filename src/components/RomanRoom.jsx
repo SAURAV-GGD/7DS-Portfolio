@@ -73,8 +73,8 @@ function PortraitStele({ src, opacity }) {
  */
 export default function RomanRoom({ waypoint, index = 0, chamberZ, cameraZRef }) {
   const groupRef = useRef()
+  const altarLightRef = useRef()
   const [isNearby, setIsNearby] = useState(false)
-  const [roomOpacity, setRoomOpacity] = useState(0)
 
   const isLeft = index % 2 === 0
   const side = isLeft ? -1 : 1
@@ -83,11 +83,15 @@ export default function RomanRoom({ waypoint, index = 0, chamberZ, cameraZRef })
   useFrame(() => {
     const camZ = cameraZRef.current ?? 0
     const distance = Math.abs(camZ - chamberZ)
-    const active = distance < 45
-    if (active !== isNearby) setIsNearby(active)
+    const active = distance < 28
+    if (active !== isNearby) {
+      setIsNearby(active)
+    }
 
-    const op = THREE.MathUtils.smoothstep(36 - distance, 0, 10) * 0.99
-    setRoomOpacity(op)
+    if (active && altarLightRef.current) {
+      const op = THREE.MathUtils.smoothstep(26 - distance, 0, 8) * 0.99
+      altarLightRef.current.intensity = 2.8 * op
+    }
   })
 
   const src = PORTRAITS[waypoint.portrait]
@@ -207,13 +211,13 @@ export default function RomanRoom({ waypoint, index = 0, chamberZ, cameraZRef })
               position={[-side * 0.4, 2.4, -3.2]}
               rotation={[0, facingYaw, 0]}
               seed={index * 10 + 1}
-              opacity={roomOpacity}
+              opacity={1}
             />
             <RomanTorch
               position={[-side * 0.4, 2.4, 3.2]}
               rotation={[0, facingYaw, 0]}
               seed={index * 10 + 2}
-              opacity={roomOpacity}
+              opacity={1}
             />
           </group>
 
@@ -223,7 +227,7 @@ export default function RomanRoom({ waypoint, index = 0, chamberZ, cameraZRef })
 
           {/* 3A. MONUMENTAL 3D ENGRAVED STONE TABLET — Front and Center */}
           <group position={[side * 10.4, 1.4, 0]} rotation={[0, facingYaw, 0]}>
-            <EngravedStoneTablet waypoint={waypoint} opacity={roomOpacity} />
+            <EngravedStoneTablet waypoint={waypoint} opacity={1} />
           </group>
 
           {/* 3B. BURNING COAL TORCHES FLANKING BOTH SIDES OF THE STONE TABLET */}
@@ -232,7 +236,7 @@ export default function RomanRoom({ waypoint, index = 0, chamberZ, cameraZRef })
             position={[side * 10.1, 1.8, -2.5]}
             rotation={[0, isLeft ? Math.PI / 2 + 0.35 : -Math.PI / 2 - 0.35, 0]}
             seed={index * 10 + 3}
-            opacity={roomOpacity}
+            opacity={1}
           />
 
           {/* Right Flanking Torch */}
@@ -240,7 +244,7 @@ export default function RomanRoom({ waypoint, index = 0, chamberZ, cameraZRef })
             position={[side * 10.1, 1.8, 2.5]}
             rotation={[0, isLeft ? Math.PI / 2 - 0.35 : -Math.PI / 2 + 0.35, 0]}
             seed={index * 10 + 4}
-            opacity={roomOpacity}
+            opacity={1}
           />
 
           {/* 3C. PORTRAIT STELE — Positioned beside the stone tablet */}
@@ -248,7 +252,7 @@ export default function RomanRoom({ waypoint, index = 0, chamberZ, cameraZRef })
             position={[side * 10.1, 1.3, isLeft ? 4.3 : -4.3]}
             rotation={[0, isLeft ? Math.PI / 2 - 0.28 : -Math.PI / 2 + 0.28, 0]}
           >
-            <PortraitStele src={src} opacity={roomOpacity} />
+            <PortraitStele src={src} opacity={1} />
           </group>
 
           {/* Portrait Flanking Torch */}
@@ -256,14 +260,15 @@ export default function RomanRoom({ waypoint, index = 0, chamberZ, cameraZRef })
             position={[side * 9.9, 2.0, isLeft ? 5.8 : -5.8]}
             rotation={[0, facingYaw, 0]}
             seed={index * 10 + 5}
-            opacity={roomOpacity}
+            opacity={1}
           />
 
           {/* 3D. Warm Ambient Sanctuary Illumination */}
           <pointLight
+            ref={altarLightRef}
             position={[side * 8.5, 3.8, 0]}
             color="#ff9a48"
-            intensity={2.8 * roomOpacity}
+            intensity={2.8}
             distance={14}
             decay={2}
           />

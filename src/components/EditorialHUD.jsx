@@ -7,6 +7,8 @@ export default function EditorialHUD({
   onToggleSound,
   onJumpToFraction,
   resumeUrl,
+  isSmoothMode = false,
+  onToggleQuality,
 }) {
   const [timeStr, setTimeStr] = useState('')
 
@@ -90,8 +92,22 @@ export default function EditorialHUD({
           </div>
         </div>
 
-        {/* Right: Audio Engine Toggle + Status Pill */}
+        {/* Right: Quality Toggle + Audio Engine Toggle + Status Pill */}
         <div className="hud-controls">
+          {onToggleQuality && (
+            <button
+              type="button"
+              className={`hud-quality-btn ${isSmoothMode ? 'is-smooth' : 'is-high'}`}
+              onClick={onToggleQuality}
+              data-cursor="MODE"
+              title={`Graphics Quality: ${isSmoothMode ? 'Smooth (60 FPS)' : 'High Fidelity'}. Click to toggle.`}
+              aria-label="Toggle 3D graphics quality"
+            >
+              <span className="quality-icon">{isSmoothMode ? '⚡' : '✦'}</span>
+              <span className="quality-text">{isSmoothMode ? '60 FPS' : 'HIGH'}</span>
+            </button>
+          )}
+
           <button
             type="button"
             className={`hud-audio-btn ${isPlayingSound ? 'is-playing' : ''}`}

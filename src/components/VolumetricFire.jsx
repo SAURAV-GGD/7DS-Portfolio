@@ -110,7 +110,7 @@ const fragmentShader = `
     float sum = 0.0;
     float freq = 1.0;
     float amp = 1.0;
-    for(int i = 0; i < 3; i++) {
+    for(int i = 0; i < 2; i++) {
       sum += abs(snoise(p * freq)) * amp;
       freq *= lacunarity;
       amp *= gain;
@@ -138,11 +138,11 @@ const fragmentShader = `
   void main() {
     vec3 rayPos = vWorldPos;
     vec3 rayDir = normalize(rayPos - cameraPosition);
-    float rayLen = 0.0288 * length(scale.xyz);
+    float rayLen = 0.052 * length(scale.xyz);
 
     vec4 col = vec4(0.0);
 
-    for(int i = 0; i < 20; i++) {
+    for(int i = 0; i < 11; i++) {
       rayPos += rayDir * rayLen;
       vec3 lp = localize(rayPos);
       lp.y += 0.5;
@@ -158,6 +158,8 @@ const fragmentShader = `
 
 /**
  * Procedural volumetric fire based on mattatz/THREE.Fire raymarching shader.
+ * Optimized with balanced raymarching steps, dual-octave turbulence,
+ * and automatic distance-based culling for smooth framerates on all devices.
  */
 export default function VolumetricFire({
   size = [0.8, 1.4, 0.8],
@@ -193,8 +195,20 @@ export default function VolumetricFire({
     }
   }, [fireTexture, color, seed, size])
 
+  const worldPosRef = useRef(new THREE.Vector3())
+
   useFrame((state) => {
     if (!meshRef.current || !matRef.current) return
+
+    // Distance-based frustum culling: skip rendering fires far along the colonnade
+    meshRef.current.getWorldPosition(worldPosRef.current)
+    const distToCam = Math.abs(state.camera.position.z - worldPosRef.current.z)
+    if (distToCam > 38) {
+      if (meshRef.current.visible) meshRef.current.visible = false
+      return
+    }
+    if (!meshRef.current.visible) meshRef.current.visible = true
+
     meshRef.current.updateMatrixWorld()
 
     const inv = matRef.current.uniforms.invModelMatrix.value
